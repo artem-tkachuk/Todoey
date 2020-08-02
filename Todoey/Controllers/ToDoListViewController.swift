@@ -11,11 +11,15 @@ import CoreData
 
 class ToDoListViewController: UITableViewController {
     var context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
     var itemsArray = [Item]()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        loadItems()
     }
+    
     
     //MARK: - Add button pressed
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -45,34 +49,12 @@ class ToDoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    //MARK: - Save Items
-    func saveItems() {
-        do {
-            try context.save()
-        } catch {
-            print("Error while saving context!")
-        }
-        
-        tableView.reloadData()
-    }
-    
-//         //MARK: - Load Items
-//        func loadItems() {
-//            if let data = try? Data(contentsOf: dataFilePath!) {
-//                let decoder = PropertyListDecoder()
-//
-//                do  {
-//                    items = try decoder.decode([Item].self, from: data)
-//                } catch {
-//                    print("Error while decoding the array, \(error)")
-//                }
-//            }
-//        }
-    
+
     //MARK: - TableView data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemsArray.count
     }
+    
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath)
@@ -84,11 +66,40 @@ class ToDoListViewController: UITableViewController {
         return cell
     }
     
+    
     //MARK: - TableView delegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //        context.delete(itemsArray[indexPath.row])
+        //        itemsArray.remove(at: indexPath.row)
+        
         itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
         saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    
+    
+    //MARK: - Save Items
+       func saveItems() {
+           do {
+               try context.save()
+           } catch {
+               print("Error while saving context!")
+           }
+           
+           tableView.reloadData()
+       }
+       
+       
+       //MARK: - Load Items
+       func loadItems() {
+           //Ask for everything stored in the persistent data storage
+           let request: NSFetchRequest<Item> = Item.fetchRequest()
+           
+           do {
+               itemsArray = try context.fetch(request)
+           } catch {
+               print("Error while fetching data from the context, \(error)")
+           }
+       }
 }
 
