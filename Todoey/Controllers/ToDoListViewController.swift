@@ -14,6 +14,7 @@ class ToDoListViewController: UITableViewController {
     
     var itemsArray = [Item]()
     
+    //MARK: - viewDidLoad()
     override func viewDidLoad() {
         super.viewDidLoad()
         loadItems()
@@ -96,6 +97,7 @@ class ToDoListViewController: UITableViewController {
 }
 
 
+
 //MARK: - Search bar methods
 extension ToDoListViewController: UISearchBarDelegate {
     //MARK: - Search button clicked
@@ -117,6 +119,7 @@ extension ToDoListViewController: UISearchBarDelegate {
         }
     }
     
+    //MARK: - query DB
     func queryDB(with query: String) {
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         
