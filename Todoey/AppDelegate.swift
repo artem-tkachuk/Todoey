@@ -17,17 +17,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         //print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-        print(Realm.Configuration.defaultConfiguration.fileURL!)    //location of the Realm file 
-        
-        let data = Data()
-        data.name = "Angela"
-        data.age = 12
-        
         do {
             let realm = try Realm()
-            try realm.write {
-                realm.add(data)
-            }
         } catch {
             print("Error initialising new realm, \(error)")
         }

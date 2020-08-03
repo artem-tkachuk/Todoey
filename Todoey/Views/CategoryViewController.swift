@@ -7,22 +7,17 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
-    var context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    let realm = try! Realm()
     
-    var categoriesArray = [Category]()
+    var categoriesArray: Results<Category>?
     
     //MARK: - viewDidLoad()
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-        
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
     }
     
     //MARK: - Add new categories
@@ -33,12 +28,11 @@ class CategoryViewController: UITableViewController {
         
         let action = UIAlertAction(title: "Add category", style: .default) { (action) in
             //Initialize the new category
-            let newCategory = Category(context: self.context)
+            let newCategory = Category()
             newCategory.name = textField.text!
             
             if newCategory.name != "" {
-                self.categoriesArray.append(newCategory)
-                self.saveCategories()
+                self.save(what: newCategory)
             }
         }
         
@@ -52,21 +46,12 @@ class CategoryViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    // MARK: - Table view data source
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoriesArray.count
-    }
-    
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.Categories.categoryCellID, for: indexPath)
-        cell.textLabel?.text = categoriesArray[indexPath.row].name
-        return cell
-    }
-    
-    //MARK: - Save items
-    func saveCategories() {
+    //MARK: - Save categories
+    func save(what category: Category) {
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("Error while savin the context, \(error)")
         }
@@ -74,17 +59,24 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    //MARK: - Load items
-    func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()) {
-        do {
-            categoriesArray = try context.fetch(request)
-        } catch {
-            print("Error while fetching data from the context, \(error)")
-        }
-        
+    //MARK: - Load categories
+    func loadCategories() {
+        categoriesArray = realm.objects(Category.self)
         tableView.reloadData()
     }
 
+    
+    // MARK: - Table view data source
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return categoriesArray?.count ?? 1
+    }
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: K.Categories.categoryCellID, for: indexPath)
+        cell.textLabel?.text = categoriesArray?[indexPath.row].name ?? "No categories added yet"
+        return cell
+    }
+    
     //MARK: - TableView delegate methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: K.Categories.goToItemsSegueID, sender: self)
@@ -95,7 +87,7 @@ class CategoryViewController: UITableViewController {
             let destinationVC = segue.destination as! ToDoListViewController
             
             if let indexPath = tableView.indexPathForSelectedRow {
-                destinationVC.selectedCategory = categoriesArray[indexPath.row]
+                destinationVC.selectedCategory = categoriesArray?[indexPath.row]
             }
         }
     }
