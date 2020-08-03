@@ -14,11 +14,11 @@ import RealmSwift
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
-        //print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        //Realm path for debugging
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
         do {
-            let realm = try Realm()
+            _ = try Realm()
         } catch {
             print("Error initialising new realm, \(error)")
         }

@@ -39,6 +39,7 @@ class ToDoListViewController: UITableViewController {
                         try self.realm.write {
                             let newItem = Item()
                             newItem.title = textField.text! //never nil ==> we can force unwrap
+                            newItem.dateCreated = Date()
                             currentCategory.items.append(newItem)
                         }
                     } catch {
@@ -103,34 +104,28 @@ class ToDoListViewController: UITableViewController {
 
 
 
-////MARK: - Search bar methods
-//extension ToDoListViewController: UISearchBarDelegate {
-//    //MARK: - Search button clicked
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//        searchBar.delegate?.searchBar?(searchBar, textDidChange: searchBar.text!)
-//    }
-//
-//    //MARK: - Text did change
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        //Erase button clicked
-//        if searchText.count == 0 {
-//            loadItems()
-//
-//            DispatchQueue.main.async {
-//                searchBar.resignFirstResponder()
-//            }
-//        } else {
-//            queryDB(with: searchText)
-//        }
-//    }
-//
-//    //MARK: - query DB
-//    func queryDB(with query: String) {
-//        let request: NSFetchRequest<Item> = Item.fetchRequest()
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//
-//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", query)
-//
-//        loadItems(with: request, predicate)
-//    }
-//}
+//MARK: - Search bar methods
+extension ToDoListViewController: UISearchBarDelegate {
+    //MARK: - Search button clicked
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        filterItems(byQuery: searchBar.text!)
+    }
+
+    //MARK: - Text did change
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.count == 0 {  //Erase button clicked
+            loadItems()
+
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        } else {
+            filterItems(byQuery: searchText)
+        }
+    }
+    
+    func filterItems(byQuery query: String) {
+        toDoItems = toDoItems?.filter("title CONTAINS[cd] %@", query).sorted(byKeyPath: "dateCreated", ascending: false)
+        tableView.reloadData()
+    }
+}
