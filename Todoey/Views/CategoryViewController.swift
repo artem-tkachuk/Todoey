@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     let realm = try! Realm()
     
     var categoriesArray: Results<Category>?
@@ -18,6 +19,14 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else {
+            fatalError("Navigation controller does not exist.")
+        }
+        
+        navBar.backgroundColor = UIColor(hexString: "#1D9BF6")
     }
     
     //MARK: - Add new categories
@@ -30,6 +39,7 @@ class CategoryViewController: UITableViewController {
             //Initialize the new category
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.color = UIColor.randomFlat().hexValue()
             
             if newCategory.name != "" {
                 self.save(what: newCategory)
@@ -64,24 +74,55 @@ class CategoryViewController: UITableViewController {
         categoriesArray = realm.objects(Category.self)
         tableView.reloadData()
     }
-
+    
+    //MARK: - Delete data from swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let selectedCategory = categoriesArray?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(selectedCategory)
+                }
+            } catch {
+                print("Error while deleting the category, \(error)")
+            }
+        }
+    }
+    
     
     // MARK: - Table view data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoriesArray?.count ?? 1
+        let numCategories = (categoriesArray?.count)!
+        return numCategories != 0 ? numCategories : 1
     }
     
+    //MARK: - Cell for row at
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.Categories.categoryCellID, for: indexPath)
-        cell.textLabel?.text = categoriesArray?[indexPath.row].name ?? "No categories added yet"
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+    
+        if categoriesArray?.count != 0 {
+            if let category = categoriesArray?[indexPath.row] {
+                cell.textLabel?.text = category.name
+                guard let categoryColor = UIColor(hexString: category.color) else {
+                    fatalError()
+                }
+                cell.backgroundColor = categoryColor
+                cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+            }
+        } else {
+            cell.textLabel?.text =  "No categories added yet"
+            cell.backgroundColor = .white
+        }
+        
         return cell
     }
     
     //MARK: - TableView delegate methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: K.Categories.goToItemsSegueID, sender: self)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
+    //MARK: - Prepare for segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == K.Categories.goToItemsSegueID {
             let destinationVC = segue.destination as! ToDoListViewController
@@ -92,3 +133,4 @@ class CategoryViewController: UITableViewController {
         }
     }
 }
+

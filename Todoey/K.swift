@@ -11,10 +11,8 @@ import Foundation
 struct K {
     struct Categories {
         static let goToItemsSegueID = "goToItems"
-        static let categoryCellID = "CategoryCell"
+        
     }
     
-    struct Items {
-        static let itemCellID = "ItemCell"
-    }
+    static let swipeCellID = "SwipeCell"
 }

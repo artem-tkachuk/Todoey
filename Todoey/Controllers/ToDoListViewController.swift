@@ -8,8 +8,11 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class ToDoListViewController: UITableViewController {
+class ToDoListViewController: SwipeTableViewController {
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     let realm = try! Realm()
     
     var toDoItems: Results<Item>?
@@ -23,7 +26,24 @@ class ToDoListViewController: UITableViewController {
     //MARK: - viewDidLoad()
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.title = selectedCategory?.name
+    }
+    
+    //MARK: - viewWillAppear()
+    override func viewWillAppear(_ animated: Bool) {
+        if let colorHex = selectedCategory?.color {
+            self.title = selectedCategory!.name
+            
+            guard let navBar = navigationController?.navigationBar else {
+                fatalError("Navigation controller does not exist.")
+            }
+            
+            if let navBarColor = UIColor(hexString: colorHex) {
+                navBar.backgroundColor = navBarColor
+                searchBar.searchBarStyle = UISearchBar.Style.minimal
+//                searchBar.backgroundColor = navBarColor
+                navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf(navBarColor, returnFlat: true)]
+            }
+        }
     }
     
     //MARK: - Add button pressed
@@ -33,23 +53,14 @@ class ToDoListViewController: UITableViewController {
         let alert = UIAlertController(title: "Add new Todoey item", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add item", style: .default) { (action) in
+            let currentText = textField.text!
             
-            if let currentCategory = self.selectedCategory {
-                if textField.text! != "" {    //TODO other validation here
-                    do {
-                        try self.realm.write {
-                            let newItem = Item()
-                            newItem.title = textField.text! //never nil ==> we can force unwrap
-                            newItem.dateCreated = Date()
-                            currentCategory.items.append(newItem)
-                        }
-                    } catch {
-                        print("Error while savin the context, \(error)")
-                    }
-                }
+            if currentText != "" {    //TODO other validation here
+                let newItem = Item()
+                newItem.title = textField.text! //never nil ==> we can force unwrap
+                newItem.dateCreated = Date()
+                self.save(what: newItem)
             }
-            
-             self.tableView.reloadData()
         }
         
         alert.addAction(action)
@@ -62,17 +73,60 @@ class ToDoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
+    //MARK: - Load Items
+     func loadItems() {
+         toDoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
+         tableView.reloadData()
+     }
+    
+    //MARK: - Save a new item
+    func save(what newItem: Item) {
+        if let currentCategory = self.selectedCategory {
+            do {
+                try self.realm.write {
+                    currentCategory.items.append(newItem)
+                }
+            } catch {
+                print("Error while savin the context, \(error)")
+            }
+            
+            self.tableView.reloadData()
+        }
+    }
+    
+    //MARK: - Delete data from swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let selectedItem = toDoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(selectedItem)
+                }
+            } catch {
+                print("Error while deleting items!")
+            }
+        }
+    }
+    
     //MARK: - TableView data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return toDoItems?.count ?? 1
     }
     
+    //MARK: - Cell for row at
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.Items.itemCellID, for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = toDoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
             cell.accessoryType = item.done ? .checkmark : .none
+            
+            let categoryColor = UIColor(hexString: selectedCategory!.color)
+            let darkeningPercentage = CGFloat(indexPath.row) / CGFloat(toDoItems!.count)
+            
+            if let darkenedColor = categoryColor?.darken(byPercentage: darkeningPercentage) {
+                cell.backgroundColor = darkenedColor
+                cell.textLabel?.textColor = ContrastColorOf(darkenedColor, returnFlat: true)
+            }
         } else {
             cell.textLabel?.text = "No items added"
         }
@@ -95,12 +149,6 @@ class ToDoListViewController: UITableViewController {
         tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
     }
-    
-   //MARK: - Load Items
-    func loadItems() {
-        toDoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
-        tableView.reloadData()
-   }
 }
 
 
