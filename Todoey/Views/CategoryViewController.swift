@@ -26,7 +26,7 @@ class CategoryViewController: UITableViewController {
         
         let alert = UIAlertController(title: "Add a new Todoey category", message: "", preferredStyle: .alert)
         
-        let action = UIAlertAction(title: "Add category", style: .default) { (action) in
+        let action = UIAlertAction(title: "Add", style: .default) { (action) in
             //Initialize the new category
             let newCategory = Category()
             newCategory.name = textField.text!
@@ -53,7 +53,7 @@ class CategoryViewController: UITableViewController {
                 realm.add(category)
             }
         } catch {
-            print("Error while savin the context, \(error)")
+            print("Error while saving the context, \(error)")
         }
         
         tableView.reloadData()

@@ -16,6 +16,5 @@ struct K {
     
     struct Items {
         static let itemCellID = "ItemCell"
-        
     }
 }

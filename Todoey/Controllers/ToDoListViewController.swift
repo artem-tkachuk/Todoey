@@ -33,6 +33,7 @@ class ToDoListViewController: UITableViewController {
         let alert = UIAlertController(title: "Add new Todoey item", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add item", style: .default) { (action) in
+            
             if let currentCategory = self.selectedCategory {
                 if textField.text! != "" {    //TODO other validation here
                     do {
@@ -124,6 +125,7 @@ extension ToDoListViewController: UISearchBarDelegate {
         }
     }
     
+    //MARK: - Filter items
     func filterItems(byQuery query: String) {
         toDoItems = toDoItems?.filter("title CONTAINS[cd] %@", query).sorted(byKeyPath: "dateCreated", ascending: false)
         tableView.reloadData()
